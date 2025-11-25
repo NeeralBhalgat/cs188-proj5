@@ -111,7 +111,6 @@ def train_digitclassifier(model, dataset):
             opt.step()
         
         val_acc = dataset.get_validation_accuracy()
-        # print(f"Epoch {epoch + 1}: Validation Accuracy = {val_acc:.4f}")
         if val_acc >= 0.98:
             break
 
@@ -131,7 +130,33 @@ def train_languageid(model, dataset):
     For more information, look at the pytorch documentation of torch.movedim()
     """
     model.train()
-    "*** YOUR CODE HERE ***"
+    batchsize = 32
+    data = DataLoader(dataset, batch_size=batchsize, shuffle=True)
+    lr = 0.005
+    opt = optim.Adam(model.parameters(), lr=lr)
+
+    for epoch in range(30):
+        for item in data:
+            x = item["x"]
+            y = item["label"]
+
+            if x.dim() == 3:
+                xs = movedim(x, 1, 0)
+            elif x.dim() == 2:
+                xs = x.unsqueeze(1)
+            else:
+                xs = x
+
+            opt.zero_grad()
+            output = model(xs)
+            loss = languageid_loss(output, y)
+            loss.backward()
+            opt.step()
+
+        val_acc = dataset.get_validation_accuracy()
+        # print(f"lang epoch {epoch+1}: val_acc={val_acc:.4f}")
+        if val_acc >= 0.81:
+            break
 
 
 
@@ -157,6 +182,6 @@ def Train_DigitConvolution(model, dataset):
             opt.step()
 
         val_acc = dataset.get_validation_accuracy()
-        # print(f"Conv Epoch {epoch+1}: val_acc={val_acc:.4f}")
+        # print(f"conv epoch {epoch+1}: val_acc={val_acc:.4f}")
         if val_acc >= 0.80:
             break

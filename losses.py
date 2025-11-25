@@ -45,7 +45,9 @@ def languageid_loss(y_pred, y):
         y: a node with shape (batch_size x 5)
     Returns: a loss node
     """
-    "*** YOUR CODE HERE ***"
+    log_probs = log_softmax(y_pred, dim=1)
+    loss = - (y * log_probs).sum(dim=1).mean()
+    return loss
 
 
 def digitconvolution_Loss(y_pred, y):
@@ -61,8 +63,6 @@ def digitconvolution_Loss(y_pred, y):
         y: a node with shape (batch_size x 10)
     Returns: a loss tensor
     """
-    # y is provided as one-hot vectors; convert to class indices
-    targets = y.argmax(dim=1)
     log_probs = log_softmax(y_pred, dim=1)
     loss = - (y * log_probs).sum(dim=1).mean()
     return loss
