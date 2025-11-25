@@ -133,7 +133,10 @@ class DigitClassificationModel(Module):
         super().__init__()
         input_size = 28 * 28
         output_size = 10
-        "*** YOUR CODE HERE ***"
+        hidden_size = 128
+        self.fc1 = Linear(input_size, hidden_size)
+        self.fc2 = Linear(hidden_size, hidden_size)
+        self.fc3 = Linear(hidden_size, output_size)
 
 
     def forward(self, x):
@@ -150,7 +153,10 @@ class DigitClassificationModel(Module):
             A node with shape (batch_size x 10) containing predicted scores
                 (also called logits)
         """
-        """ YOUR CODE HERE """
+        h1 = relu(self.fc1(x))
+        h2 = relu(self.fc2(h1))
+        out = self.fc3(h2)
+        return out
 
 
 
@@ -228,7 +234,26 @@ def Convolve(input: tensor, weight: tensor):
     input_tensor_dimensions = input.shape
     weight_dimensions = weight.shape
     Output_Tensor = tensor(())
-    "*** YOUR CODE HERE ***"
+    # Valid (no padding) 2D convolution. Input and weight are 2D tensors.
+    in_h, in_w = input_tensor_dimensions
+    k_h, k_w = weight_dimensions
+
+    out_h = in_h - k_h + 1
+    out_w = in_w - k_w + 1
+
+    # initialize output tensor
+    # compute output using stacking (avoid in-place assignments so autograd tracks ops)
+    rows = []
+    for i in range(out_h):
+        row_vals = []
+        for j in range(out_w):
+            region = input[i : i + k_h, j : j + k_w]
+            # region * weight -> tensor of same shape; sum yields scalar tensor
+            row_vals.append((region * weight).sum())
+        # stack row values into a 1D tensor
+        rows.append(stack(row_vals))
+    # stack rows into a 2D tensor
+    Output_Tensor = stack(rows)
 
     "*** End Code ***"
     return Output_Tensor
@@ -250,9 +275,13 @@ class DigitConvolutionalModel(Module):
         # Initialize your model parameters here
         super().__init__()
         output_size = 10
-
         self.convolution_weights = Parameter(ones((3, 3)))
-        """ YOUR CODE HERE """
+
+        # After applying 3x3 convolution to 28x28 img, output has shape 26 x 26 -> flattened size 676
+        conv_out_size = (28 - 3 + 1) * (28 - 3 + 1)
+        hidden_size = 64
+        self.fc1 = Linear(conv_out_size, hidden_size)
+        self.fc2 = Linear(hidden_size, output_size)
 
 
     def forward(self, x):
@@ -265,7 +294,9 @@ class DigitConvolutionalModel(Module):
             list(map(lambda sample: Convolve(sample, self.convolution_weights), x))
         )
         x = x.flatten(start_dim=1)
-        """ YOUR CODE HERE """
+        h = relu(self.fc1(x))
+        out = self.fc2(h)
+        return out
 
 
 class Attention(Module):
@@ -304,5 +335,18 @@ class Attention(Module):
         """
         B, T, C = input.size()
 
-        """YOUR CODE HERE"""
+        # B x T x C for each
+        Q = self.q_layer(input)
+        K = self.k_layer(input)
+        V = self.v_layer(input)
+
+        # Scaled dot-product
+        scores = matmul(Q, movedim(K, 1, 2)) / (self.layer_size ** 0.5)
+
+        scores = scores.masked_fill(self.mask[:, :, :T, :T] == 0, float("-inf"))[0]
+
+        # Softmax along last dimension and multiply by V
+        probs = softmax(scores, dim=-1)
+        out = matmul(probs, V)
+        return out
 

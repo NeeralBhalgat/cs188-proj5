@@ -1,4 +1,5 @@
 from torch.nn.functional import mse_loss, cross_entropy
+from torch.nn.functional import log_softmax
 
 def regression_loss(y_pred, y):
     """
@@ -27,7 +28,7 @@ def digitclassifier_loss(y_pred, y):
         y: a node with shape (batch_size x 10)
     Returns: a loss tensor
     """
-    """ YOUR CODE HERE """
+    return cross_entropy(y_pred, y)
 
 
 def languageid_loss(y_pred, y):
@@ -60,5 +61,9 @@ def digitconvolution_Loss(y_pred, y):
         y: a node with shape (batch_size x 10)
     Returns: a loss tensor
     """
-    """ YOUR CODE HERE """
+    # y is provided as one-hot vectors; convert to class indices
+    targets = y.argmax(dim=1)
+    log_probs = log_softmax(y_pred, dim=1)
+    loss = - (y * log_probs).sum(dim=1).mean()
+    return loss
     
