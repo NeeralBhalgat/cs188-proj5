@@ -70,8 +70,6 @@ def train_regression(model, dataset):
     model.train()
     batchsize = 16
     data = DataLoader(dataset, batch_size=batchsize, shuffle=True)
-    # Use a slightly higher learning rate to ensure convergence within the
-    # autograder's time budget.
     lr = 0.01
     opt = optim.Adam(model.parameters(), lr=lr)
 
